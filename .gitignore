@@ -34,6 +34,14 @@ yarn-error.log*
 supabase/.branches/
 supabase/.temp/
 
+# ── Internal working notes — keep local, never publish ─────────────────────
+HANDOFF.md
+NEXT_SESSION_PROMPT.md
+PantryHub/FoodImages/_READ-ME-add-photos.txt
+# Personal avatar used in the greeting bar (private to the owner's build)
+PantryHub/FoodImages/profile.jpg
+PantryHub/FoodImages/profile.png
+
 # ── macOS ──────────────────────────────────────────────────────────────────
 .DS_Store
 *.swp

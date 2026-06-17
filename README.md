@@ -1,155 +1,154 @@
 # PantryHub
 
-A pantry-and-cooking app for iPhone. You tell PantryHub what's in your kitchen,
-and it gives you a daily feed of recipes you can actually make right now — then
-walks you through cooking them with a text or voice chef that knows what you
-have on hand.
+**Cook what you already have. Waste less.**
 
-The app is built natively in SwiftUI (Xcode 16, iOS 17+). The thinking happens
-on a small backend: a Supabase database with Deno edge functions, plus two
-Google Cloud Run services that talk to Google's Vertex AI for the language and
-voice models.
+Roughly a third of the food we buy ends up in the bin — not because people want
+to waste it, but because two things are genuinely hard: remembering everything
+that's actually in your kitchen, and deciding what to cook with it before it
+goes off.
 
----
-
-## What it does
-
-- **Pantry** — keep track of what you own. Add items four ways: snap or upload a
-  photo (a shelf, a product, or a receipt), scan a barcode, or just say what you
-  bought out loud. Everything lands in one review list before it's saved.
-- **Recipes** — a feed of four meals (breakfast / lunch / dinner / snacks),
-  freshly curated each night and ranked by how much of each recipe you can make
-  from your current pantry. There's also an "Ask the Chef" chat that invents
-  custom recipes on request.
-- **Cooking** — a text chef and a live voice chef guide you step by step. They
-  scale ingredients to the number of people you're cooking for, warn you when
-  you're short on something, and run kitchen timers.
-- **Kitchen** — recipes you've saved or already cooked.
-
-When you finish cooking, the app deducts what you used from your pantry, so the
-next day's recipe feed stays honest about what you can still make.
+PantryHub closes that gap. You capture your whole pantry in seconds, and an AI
+chef turns it into meals you can make *right now* — curating a fresh feed every
+day and then cooking alongside you, by text or by voice. When you're done, it
+quietly updates your pantry so tomorrow's suggestions stay honest.
 
 ---
 
-## How it's put together
+## The idea in one loop
 
 ```
-┌────────────────────┐     HTTPS / WSS      ┌──────────────────────────┐
-│  iOS app (SwiftUI) │ ───────────────────▶ │  Supabase                │
-│  PantryHub/        │                      │   • Postgres (the data)  │
-└────────────────────┘                      │   • Edge functions (Deno)│
-          │                                 └────────────┬─────────────┘
-          │ live voice (WebSocket)                       │ shared-secret
-          ▼                                              ▼
-┌────────────────────┐                      ┌──────────────────────────┐
-│  voice-chef        │                      │  vertex-proxy            │
-│  (Cloud Run)       │ ───────────────────▶ │  (Cloud Run, keyless)    │
-└────────────────────┘     Vertex AI        └────────────┬─────────────┘
-                                                          ▼
-                                              Google Vertex AI (Gemini)
+        ┌──────────────────────────────────────────────────────┐
+        │                                                      │
+        ▼                                                      │
+   CAPTURE  ──▶  CURATE  ──▶  COOK  ──▶  DEDUCT  ──────────────┘
+   what you      a daily      with an     what you used,
+   have, fast    feed you     AI chef     so the loop
+   (photo /      can actually (text or    stays honest
+   barcode /     make today   voice)
+   voice)
 ```
 
-- **The app never holds an AI key.** All model calls go through the backend.
-  The two Cloud Run services authenticate to Vertex AI with a short-lived
-  identity token (no downloadable key anywhere), so usage bills to the Google
-  Cloud project's credits.
-- **Supabase is the source of truth** for the pantry, recipes, cook sessions,
-  and chat history. The edge functions talk to the Vertex proxy with a shared
-  secret; the app talks to the edge functions with the public Supabase anon key.
+Every step feeds the next. The less friction there is in capturing your pantry,
+the better the curation; the more honest the deduction, the more the daily feed
+nudges you toward the things that are about to expire.
 
 ---
 
-## Repository layout
+## What makes it good
+
+### 🧺 Capture your pantry without typing
+Adding food is the make-or-break of any pantry app, so there are four low-effort
+ways in — all funnelling into one review screen:
+
+- **Photo / gallery** — snap a shelf, a product, or a **receipt** (one photo can
+  add a whole shop). A vision model reads off each item: name, brand, size.
+- **Barcode** — point at packaged goods; details are pulled from the open
+  [Open Food Facts](https://world.openfoodfacts.org) database.
+- **Voice** — just say what you bought; it's cleaned up, spelled correctly, and
+  split into items.
+
+Anything the AI isn't sure about is flagged so you can fix it in a tap. New items
+default sensibly (a full container, an estimated expiry you can confirm), and the
+editor adapts to the product — a draggable jar for liquids, a piece counter for
+eggs and fruit.
+
+### 📦 It understands quantities and dates, not just names
+PantryHub doesn't only know you *have rice* — it tracks roughly **how much**
+(per-container fullness, normalised to canonical units) and **when it expires**.
+That's what powers low-stock and expiring-soon flags, and honest "you're short"
+warnings while cooking.
+
+### 🍳 A daily feed matched to *your* kitchen
+Each night a curator builds four meals — breakfast, lunch, dinner, snacks — and
+ranks each by how much of it you can make from what you own. It suggests
+substitutions for the bits you're missing, grounds its choices in live web
+search, and leans toward ingredients that are about to expire.
+
+### 🤖 Cook with an AI chef — text or live voice
+Pick a recipe and a chef walks you through it:
+
+- scales every ingredient and step to **who's eating** (adults and kids),
+- warns you up front when you're short on something and offers to scale down or
+  substitute,
+- runs **kitchen timers** with lock-screen notifications,
+- breaks tricky steps into clear micro-steps.
+
+The voice chef is a real-time conversation — talk to it while your hands are
+busy.
+
+### 🧠 One brain across text and voice (the agentic core)
+This is the part that makes the cooking experience feel seamless. The text chef
+and the voice chef aren't two separate features — they **share a single cook
+session** through a single-writer **ledger** for the recipe and its steps. The
+chef is a tool-using agent: it reads your live pantry, edits the recipe and steps
+on the fly, sets timers, and reconciles a step checklist that is the **single
+source of truth**. So you can start a dish by text, switch to voice mid-cook, and
+nothing falls out of sync.
+
+### ♻️ The payoff: less waste
+Finish a recipe and PantryHub deducts what you used from your pantry. Your stock
+goes down, your next feed updates, and the ingredients creeping toward their
+expiry date get nudged to the top. That's the whole point — a kitchen that keeps
+itself honest.
+
+---
+
+## Under the hood
+
+For anyone reading the code, here's the shape of it:
+
+- **iOS app** — native **SwiftUI** (Xcode 16, iOS 17+). Multimodal capture uses
+  the system camera, VisionKit for barcodes, and on-device speech recognition.
+- **Data & logic** — **Supabase** (Postgres + Deno edge functions) is the single
+  source of truth for the pantry, recipes, cook sessions, and chat history.
+- **The AI** — Google's **Gemini** models behind a small, keyless server layer:
+  a text proxy for the curator and chefs, and a live WebSocket bridge for voice.
+  The app never holds a model key.
+- **Design patterns worth a look:**
+  - a **single-writer ledger** so the text and voice chefs can edit one shared
+    recipe safely,
+  - **quantity normalisation** (everything reduced to canonical g / ml / piece)
+    that makes serving-scaling and shortfall maths reliable,
+  - **per-user nightly curation** that runs at each user's *local* midnight, with
+    web-grounded validation of the recipes.
+
+### Repository layout
 
 ```
-PantryHub/                 The iOS app (SwiftUI). File-system-synchronized,
-                           so any .swift added here is picked up automatically.
-  AppStore.swift             App-wide state (pantry, feed, kitchen).
-  Models.swift               Recipe / PantryItem and the scaling helpers.
-  BackendService.swift       HTTP clients for every edge function.
-  PantryIntakeService.swift  The four-door "add to pantry" client.
-  AddPantryView.swift        The add-to-pantry hub (photo / barcode / voice).
-  PhotoIntakeView.swift      Camera + gallery capture.
-  BarcodeIntakeView.swift    Live barcode scanner (VisionKit).
-  VoiceIntakeView.swift      Speak-your-groceries, live transcription.
-  IntakeReviewView.swift     The shared review-and-confirm list.
-  IngredientDetailView.swift The shared item editor (fullness, expiry, amount).
-  ...                        Recipe feed, chefs, timers, Kitchen, etc.
-  Config/
-    Secrets.example.plist    Template — copy to Secrets.plist and fill in.
+PantryHub/          The SwiftUI app
+  AddPantryView      ·  the four-door capture hub
+  PhotoIntakeView / BarcodeIntakeView / VoiceIntakeView
+  IntakeReviewView   ·  the shared review-and-confirm list
+  IngredientDetailView ·  the shared item editor
+  Models / AppStore / BackendService / PantryIntakeService
+  ...                ·  recipe feed, chefs, timers, Kitchen, settings
 
 supabase/
-  functions/               Deno edge functions (curate-recipes, text-chef,
-                           recipe-author, pantry, pantry-intake, …).
-  migrations/              SQL schema history.
+  functions/         Deno edge functions (curator, chefs, pantry, intake, …)
+  migrations/        SQL schema history
 
 cloud-run/
-  vertex-proxy/            Keyless text proxy to Vertex AI.
-  voice-chef/             WebSocket bridge to Vertex AI Live (voice).
-
-HANDOFF.md                 Detailed running notes / current state of the build.
+  vertex-proxy/      keyless text proxy to Gemini
+  voice-chef/        live voice bridge (Gemini Live)
 ```
 
 ---
 
-## Adding items to the pantry
+## Running it
 
-The pantry intake is one flow with four front doors, all funnelling into the
-same review screen and the same item editor:
+1. Open `PantryHub.xcodeproj` in **Xcode 16**.
+2. Copy the secrets template:
+   `cp PantryHub/Config/Secrets.example.plist PantryHub/Config/Secrets.plist`
+3. Build to a **real device** — the camera, barcode scanner, and microphone
+   don't work in the simulator.
 
-| Door | Behind the scenes |
-|------|-------------------|
-| **Photo / Gallery** | One or more images go to `pantry-intake` → a Gemini vision model reads off each product (name, brand, category, size). |
-| **Barcode** | The live scanner collects barcodes → looked up in [Open Food Facts](https://world.openfoodfacts.org) (free, no key). |
-| **Voice** | Live transcription → `pantry-intake` cleans up spelling, splits the list, and fills in sensible defaults. |
+The backend (Supabase functions + the Cloud Run services) is already deployed.
 
-Anything the AI or the lookup can't be sure about is flagged in the review list
-so you can type it in. New items default to a full container, expiry dates are
-estimated and flagged for you to confirm, and the editor shows a draggable jar
-for liquids but a piece counter for things like eggs.
+> **Secrets never live in this repo.** `Secrets.plist` and server `.env` files
+> are git-ignored; only their `.example` templates are tracked. The Supabase
+> anon key and Clerk publishable key shipped in the app are public by design.
 
 ---
 
-## Running it locally
-
-### iOS app
-
-1. Open `PantryHub.xcodeproj` in Xcode 16.
-2. Copy the secrets template and fill in your own values:
-   ```bash
-   cp PantryHub/Config/Secrets.example.plist PantryHub/Config/Secrets.plist
-   ```
-   (The app ships with the public Supabase anon key already in
-   `BackendService.swift`; `Secrets.plist` is for any extra local config.)
-3. Build and run on a **real device** for the camera, barcode scanner, and
-   microphone — those don't work in the simulator.
-
-### Backend
-
-The edge functions and Cloud Run services are already deployed. To change them
-you'll need the Supabase and Google Cloud credentials (see `HANDOFF.md`).
-
-- **Edge function:**
-  `supabase functions deploy <name> --project-ref <ref> --no-verify-jwt`
-- **Cloud Run:**
-  `gcloud run deploy <service> --source <dir> --region us-central1`
-
----
-
-## Security notes
-
-- **Never commit secrets.** `Secrets.plist` and `.env.server` are git-ignored on
-  purpose. Only their `.example` templates belong in the repo.
-- The Supabase **anon** key and Clerk **publishable** key are public by design
-  and safe to ship in the app. The service-role key and all AI/proxy secrets
-  live only in server environments, never in the app or the repo.
-- All edge functions run their own access checks and are deployed with
-  `--no-verify-jwt`.
-
----
-
-## Status
-
-The front end is essentially complete and the backend is live. The most
-detailed, up-to-date account of what's built, what's deployed, and what's next
-lives in [`HANDOFF.md`](HANDOFF.md).
+*The front end is essentially complete and the backend is live — PantryHub is an
+actively evolving project.*
