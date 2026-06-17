@@ -1,0 +1,40 @@
+# ── Secrets — NEVER commit these ───────────────────────────────────────────
+# Real API keys / service-role credentials live here. Use the .example files
+# as templates. If you ever rename or add a secrets file, add it here first.
+.env
+.env.*
+!.env.example
+**/Secrets.plist
+!**/Secrets.example.plist
+
+# ── Xcode / build artifacts ────────────────────────────────────────────────
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcscmblueprint
+*.xccheckout
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# ── Swift Package Manager ──────────────────────────────────────────────────
+.swiftpm/
+.build/
+Packages/
+
+# ── Node (Cloud Run services) ──────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# ── Supabase CLI local state ───────────────────────────────────────────────
+supabase/.branches/
+supabase/.temp/
+
+# ── macOS ──────────────────────────────────────────────────────────────────
+.DS_Store
+*.swp
+*~

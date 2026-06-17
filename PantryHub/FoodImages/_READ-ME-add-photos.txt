@@ -1,0 +1,40 @@
+HOW TO ADD FOOD PHOTOS TO PANTRYHUB
+===================================
+
+Drop your downloaded food photos straight into THIS folder (FoodImages).
+Xcode will pick them up automatically — no dragging into Xcode needed.
+
+RULES FOR EACH PHOTO
+- File type: .jpg or .png
+- Name it EXACTLY as listed below (all lowercase, hyphens, no spaces)
+- Landscape (wide) photos look best, around 1200px wide or larger
+
+PHOTOS NEEDED (12 recipes + 1 optional profile picture)
+
+Breakfast
+  french-toast            - a plate of french toast
+  avocado-toast           - avocado toast
+  berry-pancakes          - pancakes topped with berries
+
+Lunch
+  caesar-salad            - chicken caesar salad
+  margherita-pizza        - margherita pizza
+  buddha-bowl             - a veggie grain / buddha bowl
+
+Dinner
+  chicken-pad-thai        - chicken pad thai noodles
+  spaghetti-bolognese     - spaghetti bolognese
+  italian-lasagna         - a serving of lasagna
+
+Snacks
+  chocolate-chip-cookies  - chocolate chip cookies
+  hummus-veggies          - hummus with veggie sticks
+  fruit-yogurt-parfait    - a fruit & yogurt parfait
+
+Optional
+  profile                 - a photo of you for the greeting bar
+
+Example final file name:  chicken-pad-thai.jpg
+
+Until a photo is added, the app shows a neat gray placeholder box.
+You can add photos any time — one by one is fine.
